@@ -4,7 +4,7 @@ This repository builds off of the work of [Adammyhre's](https://github.com/adamm
 # Key Features
 - **Custom State Events**: Configure and trigger events using Unity's built in `StateMachineBehavior` functions or implement your own logic to trigger events.
 - **State Queue**: An Animator's Previous, Current, and Incoming states can be viewed in the editor.
-- **Blend-Tree Support**: Blend-Tree states will have their animations updated as they change.
+- **Limited Blend-Tree Support**: Blend-Tree states will have their animations updated as they change.
 - **State Information**: The following details are available for all states ShortHash, ClipName, ClipDuration, WillLoop, IsPlaying, AnimatorStateStatus, Owner, and IsIntermediate.
 - **Intermediate States**: Intermediate states are the pre-requisite states of a sequence that ends in a goal state (I.e. Crouch(previous) -> StandUp(intermediate) -> Chase(goal), StandUp would be an Intermediate state). I find this useful for indicating that a state is part of a larger sequence and if logic for the goal should be executed.
 - **AnimatorStateProperties**: The AnimatorStateProperties script reduces the 7 required AnimatorStateEventBehavior components into a much more managable list.
