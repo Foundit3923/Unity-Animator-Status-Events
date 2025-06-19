@@ -11,7 +11,6 @@ public class AnimatorStateEvent
         OnEndState,
         StartIntermediateState,
         EndIntermediateState,
-        TransformPlayer,
         OnEnterStateMachine,
         OnExitStaeMachine,
         OnUpdateState
