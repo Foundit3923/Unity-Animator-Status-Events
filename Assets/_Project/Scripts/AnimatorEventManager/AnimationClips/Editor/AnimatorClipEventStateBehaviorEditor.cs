@@ -1,61 +1,114 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
+using UnityEngine.UIElements;
+using static AnimatorEventSetter;
+using static UnityEditor.ShaderGraph.Internal.KeywordDependentCollection;
 
-[CustomEditor(typeof(AnimatorClipEventStateBehavior))]
+[CustomEditor(typeof(AnimatorEventSetter))]
 public class AnimatorClipEventStateBehaviorEditor : Editor
 {
     Motion previewClip;
     float previewTime;
     bool isPreviewing;
+    bool _hasValidStateBehaviour = false;
+    bool _stopPreviewPressed = false;
+    bool _previewPressed = false;
 
     PlayableGraph playableGraph;
     AnimationMixerPlayable mixer;
+
+    private List<float> _triggerTimeList;
+    public List<float> TriggerTimeList
+    {
+        get
+        {
+            if (_triggerTimeList != null)
+            {
+                return _triggerTimeList;
+            }
+
+            return _triggerTimeList = new();
+        }
+    }
+
+    ClipEventSubscriptionEntry entry;
 
     public override void OnInspectorGUI()
     {
         DrawDefaultInspector();
 
-        AnimatorClipEventStateBehavior stateBehaviour = (AnimatorClipEventStateBehavior)target;
+        
+        AnimatorEventSetter stateProperties = (AnimatorEventSetter)target;
+        AnimatorClipEventStateBehavior stateBehaviour = stateProperties.ClipEventStateBehavior;
+        List<ClipEventSubscriptionEntry> subscriptionList = stateProperties.getClipSubscriptions();
+
+        if (TriggerTimeList != null && TriggerTimeList.Count != subscriptionList.Count)
+        {
+            _triggerTimeList.Clear();
+
+            for (int i = 0; i < subscriptionList.Count; i++)
+            {
+                _triggerTimeList.Add(subscriptionList[i].TriggerTime);
+            }
+        }
+
+        for (int i = 0; i < subscriptionList.Count; i++)
+        {
+            if (TriggerTimeList[i] != subscriptionList[i].TriggerTime)
+            {
+                if (!subscriptionList[i].Equals(entry))
+                {
+                    entry = subscriptionList[i];
+                }
+                
+                TriggerTimeList[i] = entry.TriggerTime;
+            }
+        }
 
         if (Validate(stateBehaviour, out string errorMessage))
         {
             GUILayout.Space(10);
-
-            if (isPreviewing)
+            if (entry != null)
             {
-                if (GUILayout.Button("Stop Preview"))
+                if (isPreviewing)
                 {
-                    EnforceTPose();
-                    isPreviewing = false;
-                    AnimationMode.StopAnimationMode();
-                    playableGraph.Destroy();
+                    if (GUILayout.Button("Stop Preview"))
+                    {
+                        EnforceTPose();
+                        isPreviewing = false;
+                        entry = null;
+                        AnimationMode.StopAnimationMode();
+                        playableGraph.Destroy();
+                    }
+                    else
+                    {
+                        PreviewAnimationClip(stateBehaviour, entry);
+                    }
                 }
-                else
+                else if (GUILayout.Button("Preview"))
                 {
-                    PreviewAnimationClip(stateBehaviour);
+                    isPreviewing = true;
+                    AnimationMode.StartAnimationMode();
                 }
-            }
-            else if (GUILayout.Button("Preview"))
-            {
-                isPreviewing = true;
-                AnimationMode.StartAnimationMode();
-            }
 
-            GUILayout.Label($"Previewing at {previewTime:F2}s", EditorStyles.helpBox);
-        }
-        else
-        {
-            EditorGUILayout.HelpBox(errorMessage, MessageType.Info);
+                GUILayout.Label($"Previewing at {previewTime:F2}s", EditorStyles.helpBox);
+            }
+            else
+            {
+                EditorGUILayout.HelpBox(errorMessage, MessageType.Info);
+            }            
         }
     }
 
-    void PreviewAnimationClip(AnimatorClipEventStateBehavior stateBehaviour)
+    void PreviewAnimationClip(AnimatorClipEventStateBehavior stateBehaviour, ClipEventSubscriptionEntry entry)
     {
         AnimatorController animatorController = GetValidAnimatorController(out string errorMessage);
         if (animatorController == null) return;
@@ -71,14 +124,14 @@ public class AnimatorClipEventStateBehaviorEditor : Editor
         // Handle BlendTree logic
         if (motion is BlendTree blendTree)
         {
-            SampleBlendTreeAnimation(stateBehaviour, stateBehaviour.TriggerTime);
+            SampleBlendTreeAnimation(stateBehaviour, entry.TriggerTime);
             return;
         }
 
         // If it's a simple AnimationClip, sample it directly
         if (motion is AnimationClip clip)
         {
-            previewTime = stateBehaviour.TriggerTime * clip.length;
+            previewTime = entry.TriggerTime * clip.length;
             AnimationMode.SampleAnimationClip(Selection.activeGameObject, clip, previewTime);
         }
     }

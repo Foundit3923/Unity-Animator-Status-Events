@@ -3,14 +3,13 @@ using System.Linq;
 using UnityEngine;
 using UnityServiceLocator;
 using static AnimatorClipEvent;
+using static AnimatorEventSetter;
 
+[DisallowMultipleComponent]
 public class AnimatorClipEventStateBehavior : StateMachineBehaviour
 {
     protected AnimatorStateInfo stateInfo;
     public AnimatorStateInfo StateInfo => stateInfo;
-
-    public AnimatorClipEventType EventName;
-    [Range(0f, 1f)] public float TriggerTime;
 
     Blackboard _blackboard;
     Blackboard blackboard
@@ -41,22 +40,23 @@ public class AnimatorClipEventStateBehavior : StateMachineBehaviour
         set => _blackboardController = value;
     }
 
-    bool _hasTriggered;
+    private AnimatorEventSetter _properties;
 
-    private AnimatorStateProperties _properties;
+    private List<ClipEventSubscriptionEntry> _clipEventSubscriptionList = new();
+
+    private void OnEnable()
+    {
+        _clipEventSubscriptionList.Clear();
+        _clipEventSubscriptionList = _properties.getClipSubscriptions();
+    }
 
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         if (_properties == null)
         {
             this.stateInfo = stateInfo;
-            AnimatorStateProperties[] propertiesArray = animator.GetBehaviours<AnimatorStateProperties>();
+            AnimatorEventSetter[] propertiesArray = animator.GetBehaviours<AnimatorEventSetter>();
             _properties = propertiesArray.First(behavior => behavior.StateNameHash == stateInfo.shortNameHash);
-        }
-
-        if (stateInfo.shortNameHash == _properties.StateNameHash)
-        {
-            _hasTriggered = false;
         }
     }
 
@@ -65,16 +65,19 @@ public class AnimatorClipEventStateBehavior : StateMachineBehaviour
         if (stateInfo.shortNameHash == _properties.StateNameHash)
         {
             float currentTime = stateInfo.normalizedTime % 1f;
-
-            if (!_hasTriggered && currentTime >= TriggerTime)
+            ClipEventSubscriptionEntry[] subscriptionsToProc = _clipEventSubscriptionList.Where(c => c.TriggerTime <= currentTime).ToArray();
+            if (subscriptionsToProc.Length > 0)
             {
-                NotifyReceiver(animator);
-                _hasTriggered = true;
+                foreach(ClipEventSubscriptionEntry entry in subscriptionsToProc) 
+                {
+                    NotifyReceiver(animator, entry.EventType);
+                    _clipEventSubscriptionList.Remove(entry);
+                }
             }
         }
     }
 
-    void NotifyReceiver(Animator animator)
+    void NotifyReceiver(Animator animator, AnimatorClipEventType eventType)
     {
         if (blackboard.TryGetValue(BlackboardController.BlackboardKeyStrings.AnimationEventReceivers, out List<AnimatorClipEventReceiver> receivers))
         {
@@ -82,7 +85,7 @@ public class AnimatorClipEventStateBehavior : StateMachineBehaviour
             {
                 foreach (AnimatorClipEventReceiver receiver in receivers)
                 {
-                    receiver?.OnAnimationEventTriggered(EventName, animator.GetCurrentAnimatorStateInfo(0), animator.GetCurrentAnimatorClipInfo(0)[0], animator.gameObject);
+                    receiver?.OnAnimationEventTriggered(eventType, animator.GetCurrentAnimatorStateInfo(0), animator.GetCurrentAnimatorClipInfo(0)[0], animator.gameObject);
                 }
             }
         }

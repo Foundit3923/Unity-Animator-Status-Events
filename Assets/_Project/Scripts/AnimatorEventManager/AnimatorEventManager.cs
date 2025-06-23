@@ -10,15 +10,19 @@ using static AnimatorStateEvent;
 using static UnityEngine.Rendering.DebugUI;
 
 [RequireComponent(typeof(Animator))]
+[RequireComponent(typeof(AnimatorStateEventReceiver))]
+[RequireComponent(typeof(AnimatorClipEventReceiver))]
 public class AnimatorEventManager : MonoBehaviour
 {
-    public enum ASMStatus
+    [Flags]
+     public enum ASMStatus
     {
-        Running,
-        Finished,
-        Transitioning,
-        Idle,
-        Error
+        Running = 1 << 1,
+        Finished = 1 << 2,
+        Transitioning = 1 << 3,
+        Idle = 1 << 4,
+        Error = 1 << 5,
+        None = 0
     }
 
     [Flags]
@@ -337,5 +341,18 @@ public class AnimatorEventManager : MonoBehaviour
         if (IncomingState != null) { stateFlags |= StateFlags.Incoming; }
 
         return StatusDict[stateFlags];
+    }
+
+    public AnimatorState GetState(string clipName = null, string stateName = null, int hash = -1) => _animatorStates.Where(s => MeetsCriteria(stateName, clipName, hash, s)).FirstOrDefault();
+
+    public bool MeetsCriteria(string stateName, string clipName, int hash, AnimatorState state)
+    {
+        if (clipName != null && !state.ClipName.Contains(clipName)) { return false; }
+
+        if (hash != -1 && state.Hash != hash) { return false; }
+
+        if (stateName != null && state.Hash != Animator.StringToHash(stateName)) { return false; }
+
+        return true;
     }
 }

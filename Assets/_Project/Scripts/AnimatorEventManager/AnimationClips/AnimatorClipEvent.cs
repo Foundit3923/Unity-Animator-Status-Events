@@ -13,4 +13,5 @@ public class AnimatorClipEvent
 
     public AnimatorClipEventType EventName;
     public UnityEvent<GameObject, AnimatorStateInfo, AnimatorClipInfo, AnimatorClipEventType> OnAnimatorClipEvent;
+    public bool HasTriggered = false;
 }
