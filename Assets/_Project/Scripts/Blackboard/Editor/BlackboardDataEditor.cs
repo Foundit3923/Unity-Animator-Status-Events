@@ -1,3 +1,6 @@
+using System;
+using UnityEditor;
+using UnityEditorInternal;
 using UnityEngine;
 
     [CustomEditor(typeof(BlackboardData))]
@@ -8,8 +11,8 @@ using UnityEngine;
             entryList = new ReorderableList(serializedObject, serializedObject.FindProperty("entries"), true, true, true, true) {
                 drawHeaderCallback = rect => {
                     EditorGUI.LabelField(new Rect(rect.x, rect.y, rect.width * 0.3f, EditorGUIUtility.singleLineHeight), "Key");
-                    EditorGUI.LabelField(new Rect(rect.x + rect.width * 0.3f + 10, rect.y, rect.width * 0.3f, EditorGUIUtility.singleLineHeight), "Type");
-                    EditorGUI.LabelField(new Rect(rect.x + rect.width * 0.6f + 5, rect.y, rect.width * 0.4f, EditorGUIUtility.singleLineHeight), "Value");
+                    EditorGUI.LabelField(new Rect(rect.x + (rect.width * 0.3f) + 10, rect.y, rect.width * 0.3f, EditorGUIUtility.singleLineHeight), "Type");
+                    EditorGUI.LabelField(new Rect(rect.x + (rect.width * 0.6f) + 5, rect.y, rect.width * 0.4f, EditorGUIUtility.singleLineHeight), "Value");
                 }
             };
 
@@ -22,8 +25,8 @@ using UnityEngine;
                 var value = element.FindPropertyRelative("value");
                 
                 var keyNameRect = new Rect(rect.x, rect.y, rect.width * 0.3f, EditorGUIUtility.singleLineHeight);
-                var valueTypeRect = new Rect(rect.x + rect.width * 0.3f, rect.y, rect.width * 0.3f, EditorGUIUtility.singleLineHeight);
-                var valueRect = new Rect(rect.x + rect.width * 0.6f, rect.y, rect.width * 0.4f, EditorGUIUtility.singleLineHeight);
+                var valueTypeRect = new Rect(rect.x + (rect.width * 0.3f), rect.y, rect.width * 0.3f, EditorGUIUtility.singleLineHeight);
+                var valueRect = new Rect(rect.x + (rect.width * 0.6f), rect.y, rect.width * 0.4f, EditorGUIUtility.singleLineHeight);
                 
                 EditorGUI.PropertyField(keyNameRect, keyName, GUIContent.none);
                 EditorGUI.PropertyField(valueTypeRect, valueType, GUIContent.none);

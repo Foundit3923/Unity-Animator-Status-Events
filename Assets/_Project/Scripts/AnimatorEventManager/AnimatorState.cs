@@ -4,11 +4,12 @@ using UnityEngine;
 [Serializable]
 public class AnimatorState
 {
-    public enum AnimatorStateStatus
+    [Flags] public enum AnimatorStateStatus
     {
-        Running,
-        Finished,
-        Idle
+        Running = 1 << 0,
+        Finished = 1 << 1,
+        Idle = 1 << 2,
+        None = 0
     }
 
     public int Hash;
@@ -39,4 +40,6 @@ public class AnimatorState
         Owner = owner;
         IsIntermediate = isIntermediate;
     }
+
+    public bool EvalStatus(AnimatorStateStatus status) => (Status & status) != AnimatorStateStatus.None;
 }

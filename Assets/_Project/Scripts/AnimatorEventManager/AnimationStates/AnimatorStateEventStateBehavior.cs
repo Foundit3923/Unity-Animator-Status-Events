@@ -3,7 +3,9 @@ using System.Linq;
 using UnityEngine;
 using UnityServiceLocator;
 using static AnimatorStateEvent;
+using static AnimatorEventSetter;
 
+[DisallowMultipleComponent]
 public class AnimatorStateEventStateBehavior : StateMachineBehaviour
 {
     protected AnimatorStateInfo stateInfo;
@@ -38,7 +40,7 @@ public class AnimatorStateEventStateBehavior : StateMachineBehaviour
         set => _blackboardController = value;
     }
 
-    private AnimatorStateProperties _properties;
+    private AnimatorEventSetter _properties;
 
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
@@ -46,16 +48,29 @@ public class AnimatorStateEventStateBehavior : StateMachineBehaviour
         if (_properties == null)
         {
             this.stateInfo = stateInfo;
-            AnimatorStateProperties[] propertiesArray = animator.GetBehaviours<AnimatorStateProperties>();
+            AnimatorEventSetter[] propertiesArray = animator.GetBehaviours<AnimatorEventSetter>();
             _properties = propertiesArray.First(behavior => behavior.StateNameHash == stateInfo.shortNameHash);
         }
 
         if (stateInfo.shortNameHash == _properties.StateNameHash)
         {
-            if (_properties.StateEventSubscriptionDict[AnimatorStateEventType.OnStartState] ||
-                _properties.StateEventSubscriptionDict[AnimatorStateEventType.StartIntermediateState])
+            AnimatorStateEventTriggers[] triggers = new AnimatorStateEventTriggers[]
             {
-                NotifyReceiver(animator, StateInfo, _properties.IsIntermediate == true ? AnimatorStateEventType.StartIntermediateState : AnimatorStateEventType.OnStartState);
+                AnimatorStateEventTriggers.OnStartState,
+            };
+            StateEventSubscriptionEntry[] eventsToTrigger = _properties.GetTriggerSubscriptions(triggers);
+
+            if (eventsToTrigger.Length > 0)
+            {
+                foreach (StateEventSubscriptionEntry entry in eventsToTrigger)
+                {
+                    NotifyReceiver(animator, StateInfo, entry.EventType);
+                }
+            }
+
+            if (_properties.StateEventSubscriptionDict[AnimatorStateEventType.TransformPlayer])
+            {
+                NotifyReceiver(animator, StateInfo, _properties.IsIntermediate == true ? AnimatorStateEventType.StartIntermediateState : AnimatorStateEventType.TransformPlayer);
             }
         }
     }
@@ -64,9 +79,17 @@ public class AnimatorStateEventStateBehavior : StateMachineBehaviour
     {
         if (stateInfo.shortNameHash == _properties.StateNameHash)
         {
-            if (_properties.StateEventSubscriptionDict[AnimatorStateEventType.OnUpdateState])
+            AnimatorStateEventTriggers[] triggers = new AnimatorStateEventTriggers[]
             {
-                NotifyReceiver(animator, StateInfo, AnimatorStateEventType.OnUpdateState);
+                AnimatorStateEventTriggers.OnUpdateState
+            };
+            StateEventSubscriptionEntry[] eventsToTrigger = _properties.GetTriggerSubscriptions(triggers);
+            if (eventsToTrigger.Length > 0)
+            {
+                foreach (StateEventSubscriptionEntry entry in eventsToTrigger)
+                {
+                    NotifyReceiver(animator, StateInfo, entry.EventType);
+                }
             }
         }
     }
@@ -75,10 +98,17 @@ public class AnimatorStateEventStateBehavior : StateMachineBehaviour
     {
         if (stateInfo.shortNameHash == _properties.StateNameHash)
         {
-            if (_properties.StateEventSubscriptionDict[AnimatorStateEventType.OnEndState] ||
-                _properties.StateEventSubscriptionDict[AnimatorStateEventType.EndIntermediateState])
+            AnimatorStateEventTriggers[] triggers = new AnimatorStateEventTriggers[]
             {
-                NotifyReceiver(animator, StateInfo, _properties.IsIntermediate == true ? AnimatorStateEventType.EndIntermediateState : AnimatorStateEventType.OnEndState);
+                AnimatorStateEventTriggers.OnEndState
+            };
+            StateEventSubscriptionEntry[] eventsToTrigger = _properties.GetTriggerSubscriptions(triggers);
+            if (eventsToTrigger.Length > 0)
+            {
+                foreach (StateEventSubscriptionEntry entry in eventsToTrigger)
+                {
+                    NotifyReceiver(animator, StateInfo, entry.EventType);
+                }
             }
         }
     }
@@ -96,6 +126,14 @@ public class AnimatorStateEventStateBehavior : StateMachineBehaviour
                 foreach (AnimatorStateEventReceiver receiver in receivers)
                 {
                     AnimatorClipInfo eventOwnerClipInfo = default;
+                    AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+                    AnimatorStateInfo nextStateInfo = animator.GetNextAnimatorStateInfo(0);
+                    AnimatorClipInfo clipInfo = animator.GetCurrentAnimatorClipInfo(0)[0];
+                    AnimatorClipInfo[] nextClipInfoArray = animator.GetNextAnimatorClipInfo(0);
+                    if (nextClipInfoArray.Length > 0)
+                    {
+                        AnimatorClipInfo nextClipInfo = animator.GetNextAnimatorClipInfo(0)[0];
+                    }
 
                     if (eventOwnerInfo.Equals(animator.GetCurrentAnimatorStateInfo(0)))
                     {

@@ -5,7 +5,7 @@ using static AnimatorStateEvent;
 
 public class AnimatorStateEventReceiver : MonoBehaviour
 {
-    [SerializeField] List<AnimatorStateEvent> _animationStateEvents = new();
+    [SerializeField] public List<AnimatorStateEvent> _animationStateEvents = new();
 
     Blackboard _blackboard;
     Blackboard blackboard

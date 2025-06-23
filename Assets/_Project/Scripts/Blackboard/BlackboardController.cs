@@ -13,21 +13,19 @@ public class BlackboardController : MonoBehaviour
     }
 
     [SerializeField] BlackboardData blackboardData;
-    [SerializeField] Utility utils;
     private Blackboard blackboardSaveState;
     private Arbiter arbiterSaveState;
     private PriorityGroup priorityGroupSaveState;
     private Blackboard blackboard = new();
     private Arbiter arbiter = new();
     private PriorityGroup priorityGroup = new();
-    public LoadManager.State state;
+    public Utilities.State state;
     private bool isBlackboardActive;
     private Dictionary<string, BlackboardKey> blackboardKeys = new();
 
     private void Awake()
     {
-        utils.DebugOut("BlackboardController Awake");
-        state = LoadManager.State.Awake;
+        state = Utilities.State.Awake;
         isBlackboardActive = false;
         DontDestroyOnLoad(this);
         ServiceLocator.Global.Register(this);
@@ -39,8 +37,7 @@ public class BlackboardController : MonoBehaviour
         SceneManager.sceneLoaded += EvalResetToSave;
         InitializeKeys();
         isBlackboardActive = true;
-        state = LoadManager.State.Started;
-        utils.DebugOut("BlackboardController Started");
+        state = Utilities.State.Started;
     }
 
     private void InitializeKeys()
@@ -77,7 +74,6 @@ public class BlackboardController : MonoBehaviour
 
     public void SaveState()
     {
-        utils.DebugOut("BlackboardController SaveState");
         isBlackboardActive = false;
         blackboardSaveState ??= blackboard;
         arbiterSaveState ??= arbiter;
@@ -87,8 +83,6 @@ public class BlackboardController : MonoBehaviour
 
     private void EvalResetToSave(Scene scene, LoadSceneMode mode)
     {
-        utils.DebugOut("BlackboardController EvalResetToSave");
-        utils.DebugOut($"BlackboardController Scene: {scene.name}");
         if (scene.name == "MainMenu")
         {
             ResetToSave();
@@ -97,7 +91,6 @@ public class BlackboardController : MonoBehaviour
 
     private void ResetToSave()
     {
-        utils.DebugOut("BlackboardController ResetToSave");
         isBlackboardActive = false;
         if (blackboardSaveState != null)
         {
@@ -126,7 +119,6 @@ public class BlackboardController : MonoBehaviour
 
     public void DeregisterAllPriorityGroupExperts()
     {
-        utils.DebugOut("BlackboardController DeregisterAllPriorityGroupExperts");
         List<IExpert> expertList = priorityGroup.GetExperts();
         foreach (IExpert expert in expertList)
         {
@@ -134,23 +126,15 @@ public class BlackboardController : MonoBehaviour
         }
     }
 
-    public bool isPriorityGroupProcessingActions()
-    {
-        utils.DebugOut("BlackboardController isPriorityGroupProcessingActions");
-        return priorityGroup.processingPriorityActions;
-    }
+    public bool isPriorityGroupProcessingActions() => priorityGroup.processingPriorityActions;
 
     //TODO: Change to FixedUpdate for testing
     private void Update()
     {
-        utils.DebugOut($"BlackboardController isBlackboardActive: {isBlackboardActive}", Utility.DebugLevel.Deep);
         if (isBlackboardActive)
         {
-            utils.DebugOut($"BlackboardController isBlackboardActive: {isBlackboardActive}", Utility.DebugLevel.Deep);
-
             if (priorityGroup.HasPriorityActions(blackboard))
             {
-                utils.DebugOut("BlackboardController HasPriorityActions", Utility.DebugLevel.Deep);
                 foreach (var action in priorityGroup.BlackboardIteration(blackboard))
                 {
                     action();
