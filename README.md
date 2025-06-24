@@ -7,8 +7,8 @@ This repository builds off of the work of [Adammyhre's](https://github.com/adamm
 - **Limited Blend-Tree Support**: Blend-Tree states will have their animations updated as they change.
 - **State Information**: The following details are available for all states ShortHash, ClipName, ClipDuration, WillLoop, IsPlaying, AnimatorStateStatus, Owner, and IsIntermediate.
 - **Intermediate States**: Intermediate states are the pre-requisite states of a sequence that ends in a goal state (I.e. Crouch(previous) -> StandUp(intermediate) -> Chase(goal), StandUp would be an Intermediate state). I find this useful for indicating that a state is part of a larger sequence and if logic for the goal should be executed.
-- **AnimatorEventSetter**: The AnimatorStateProperties is the only behaviour needed (it requires everything else and untiy handles it). It reduces the 7 required AnimatorStateEventBehaviors and 2 required AnimatorClipEventBehaviors into their own manageable and pre-poplulated lists. Ready for custom events.
-- **AnimatorStateProperties AnimatorClipEventStateBehavior list**: AnimatorClipEventStateBehaviors are managable from AnimatorEventSetter. Retains all previous functionality
+- **AnimatorEventSetter**: The AnimatoEventSetter is the only behaviour needed (it requires everything else and untiy handles it). It reduces the 7 required AnimatorStateEventBehaviors and 2 required AnimatorClipEventBehaviors into their own manageable and pre-poplulated lists. Ready for custom events.
+- **AnimatorEventSetter AnimatorClipEventStateBehavior list**: AnimatorClipEventStateBehaviors are managable from AnimatorEventSetter. Retains all previous functionality
 
 # Future Plans
 - **Blend Tree Support**: Currently blend trees are only minimally supported
